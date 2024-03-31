@@ -34,3 +34,45 @@ exports.postAddUser = async(req, res, next) => {
         res.status(500).json({ message: 'Internal server error' });
       }
 };
+
+exports.postLoginUser = async (req, res, next) => {
+  try {
+    // Extract email and password from request body
+    const { email, password } = req.body;
+
+    // Check if email and password are provided
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password', success: false });
+    }
+
+    // Find user by email in the database
+    const user = await User.findOne({ where: { email } });
+
+    // If user doesn't exist, return error
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials', success: false });
+    }
+
+    // Compare provided password with hashed password in the database
+    //const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = user.password === password;
+
+    // If passwords don't match, return error
+    if (!passwordMatch) {
+      return res.status(401).json({ message: 'Invalid credentials', success: false });
+    }
+
+    // If passwords match, create JWT token
+    // const token = jwt.sign(
+    //   { userId: user.id, email: user.email },
+    //   process.env.JWT_SECRET, // Your JWT secret key
+    //   { expiresIn: '1h' } // Token expiration time
+    // );
+
+    // Respond with success message and token
+    res.status(200).json({ message: 'Login successful', success: true });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).json({ message: 'Internal server error', success: false });
+  }
+};
