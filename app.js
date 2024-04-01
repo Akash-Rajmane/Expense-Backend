@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 
 app.use(userRoutes);
 
-sequelize.sync().then(() => {
+sequelize.sync({}).then(() => {
     app.listen(4000, () => {
       console.log('Server is running on port 4000');
     });
