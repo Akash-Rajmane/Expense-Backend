@@ -50,7 +50,7 @@ exports.postLoginUser = async (req, res, next) => {
 
     // If user doesn't exist, return error
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials', success: false });
+      return res.status(404).json({ message: 'User not found', success: false });
     }
 
     // Compare provided password with hashed password in the database
