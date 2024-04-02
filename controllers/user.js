@@ -29,7 +29,7 @@ exports.postSignUpUser = async(req, res, next) => {
         });
 
         const token = jwt.sign(
-          { userId: user.id, email: user.email },
+          { userId: newUser.id, email: newUser.email },
           process.env.JWT_SECRET, // Your JWT secret key
           { expiresIn: '1h' } // Token expiration time
         );
