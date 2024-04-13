@@ -82,3 +82,20 @@ exports.postLogInUser = async (req, res, next) => {
     res.status(500).json({ message: 'Internal server error', success: false });
   }
 };
+
+exports.getUser = async(req,res,next) => {
+  try{
+    const {userId} = req.params;
+    const user = await User.findByPk(userId);
+    // If user doesn't exist, return error
+    if (!user) {
+      return res.status(404).json({ message: 'User not found', success: false });
+    }
+
+    res.status(200).json({user:user});
+
+  }catch(error){
+    console.error('User Not Found :', error);
+    res.status(404).json({ message: 'User Not Found', success: false });
+  }
+}

@@ -11,13 +11,14 @@ const checkAuth = async function (req, res, next) {
   const bearerToken = req.headers["authorization"];
   const token = bearerToken.split(" ")[1];
   
-  jwt.verify(token, `${process.env.JWT_SECRET}`, (err, payload) => {
+  jwt.verify(token, `${process.env.JWT_SECRET}`, (err) => {
     if (err) {
         const unauthorizedError = new Error("Unauthorized");
         unauthorizedError.status = 401;
         return next(unauthorizedError);
     }
-    req.user = payload;
+    const decodedToken = jwt.verify(token, `${process.env.JWT_SECRET}`);
+    req.user = { userId: decodedToken.userId };
     next();
   });
 }
