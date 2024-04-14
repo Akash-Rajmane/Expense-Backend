@@ -14,7 +14,7 @@ const Expense = sequelize.define('Expense', {
     allowNull: false
   },
   amount: {
-    type: Sequelize.INTEGER,
+    type: Sequelize.DOUBLE,
     allowNull: false
   },
   category: {
