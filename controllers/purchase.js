@@ -17,12 +17,12 @@ exports.purchasePremium = (req, res, next) => {
                 throw new Error(JSON.stringify(err));
             }
             try {
-                const user = await User.findByPk(req.user.userId);
-                if (!user) {
+                
+                if (!req.user) {
                     return res.status(404).json({ error: 'User not found' });
                 }
                 const newOrder = await Order.create({ orderId: order.id, status: "PENDING" });
-                await user.addOrder(newOrder);
+                await req.user.addOrder(newOrder);
                 res.status(201).json({ order, key_id: rzp.key_id });
             } catch (err) {
                 throw new Error(err);
@@ -41,8 +41,7 @@ exports.updateTransactionStatus = async (req, res, next) => {
     try {
         const { payment_id, order_id } = req.body;
         const order = await Order.findOne({ where: { orderId: order_id } });
-        const user = await User.findByPk(req.user.userId);
-        await Promise.all([order.update({ paymentId: payment_id, status: 'SUCCESS' }), user.update({ isPremiumUser: true })])
+        await Promise.all([order.update({ paymentId: payment_id, status: 'SUCCESS' }), req.user.update({ isPremiumUser: true })])
         res.status(202).json({
             success: true,
             message: "Transaction Successful"

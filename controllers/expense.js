@@ -1,12 +1,11 @@
 const Expense = require("../models/expense");
 const User = require("../models/user");
+const sequelize = require('../util/database');
 
 
-exports.getAllExpensesByUserId = async(req, res, next) => {
+exports.getAllExpensesByUser = async(req, res, next) => {
     try{
-        const { userId } = req.params;
-        const expenses = await Expense.findAll({where:{userId}});
-
+        const expenses = await req.user.getExpenses();
         if(!expenses){
             return res.status(404).json({message:"No expenses found"})
         }
@@ -14,23 +13,22 @@ exports.getAllExpensesByUserId = async(req, res, next) => {
         res.json(expenses);
 
     }catch(err){
-
+        console.log(err);
     }
 }
 
 exports.postAddExpense = async(req, res, next) => {
+    const transaction = await sequelize.transaction();
     try{
-        const { userId } = req.params;
         const { amount, description, category } = req.body;
-        const user = await User.findByPk(userId);
-        if (!user) {
-          return res.status(404).json({ error: 'User not found' });
-        }
-        const newExpense = await Expense.create({ amount, description, category });
-        await user.addExpense(newExpense);
+        const newExpense = await req.user.createExpense({ amount, description, category }, { transaction });
+        req.user.totalExpense += Number(amount);
+        await req.user.save({ transaction });
+        await transaction.commit();
         res.status(201).json(newExpense);
     }catch(err){
         console.log(err);
+        await transaction.rollback();
         res.status(500).json({ error: 'Failed to add expense' });
     }
 };
@@ -59,13 +57,20 @@ exports.putEditExpense = async (req, res, next) => {
 };
 
 exports.deleteExpense = async (req, res, next) => {
+    const transaction = await sequelize.transaction();
     try {
         const { expenseId } = req.params;
-        const expense = await Expense.findByPk(expenseId);
+        const expense = await Expense.findByPk(expenseId, {transaction});
+        
         if (!expense) {
           return res.status(404).json({ error: 'Expense not found' });
         }
-        await expense.destroy();
+        await expense.destroy({transaction});
+        
+        req.user.totalExpense -= expense.amount;
+        await req.user.save({ transaction });
+        await transaction.commit();
+        
         res.sendStatus(204); // No content
       } catch (error) {
         console.log(error);

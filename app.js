@@ -25,7 +25,7 @@ Order.belongsTo(User);
 app.use(userRoutes);
 app.use(expenseRoutes);
 app.use('/purchase', purchaseRoutes);
-app.use('/premium',premiumRoutes);
+app.use('/premium', premiumRoutes);
 
 sequelize.sync().then(() => {
     app.listen(4000, () => {

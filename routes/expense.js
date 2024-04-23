@@ -5,9 +5,9 @@ const authMiddleware = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
-router.get('/expenses/:userId', authMiddleware.checkAuth, expenseController.getAllExpensesByUserId);
+router.get('/get-expenses', authMiddleware.checkAuth, expenseController.getAllExpensesByUser);
 
-router.post('/expenses/:userId/add-expense', authMiddleware.checkAuth, expenseController.postAddExpense);
+router.post('/expenses/add-expense', authMiddleware.checkAuth, expenseController.postAddExpense);
 
 router.put('/expenses/:userId/edit-expense',  authMiddleware.checkAuth, expenseController.putEditExpense);
 

@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { isPremiumUser } = require("../middlewares/premiumMiddleware");
 
 exports.postSignUpUser = async(req, res, next) => {
     try {
@@ -83,16 +84,14 @@ exports.postLogInUser = async (req, res, next) => {
   }
 };
 
-exports.getUser = async(req,res,next) => {
+exports.getIsPremiumUser = async(req,res,next) => {
   try{
-    const {userId} = req.params;
-    const user = await User.findByPk(userId);
-    // If user doesn't exist, return error
-    if (!user) {
+    
+    if (!req.user) {
       return res.status(404).json({ message: 'User not found', success: false });
     }
 
-    res.status(200).json({user:user});
+    res.status(200).json({isPremiumUser:req.user.isPremiumUser});
 
   }catch(error){
     console.error('User Not Found :', error);

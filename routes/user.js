@@ -3,9 +3,10 @@ const express = require('express');
 const userController = require('../controllers/user');
 
 const router = express.Router();
+const authMiddleware = require("../middlewares/authMiddleware");
 
 
-router.get('/get-user/:userId', userController.getUser);
+router.get('/is-premium-user', authMiddleware.checkAuth, userController.getIsPremiumUser);
 
 router.post('/add-user', userController.postSignUpUser);
 
