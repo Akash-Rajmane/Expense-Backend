@@ -6,6 +6,7 @@ const sequelize = require('../util/database');
 exports.getAllExpensesByUser = async(req, res, next) => {
     try{
         const expenses = await req.user.getExpenses();
+        
         if(!expenses){
             return res.status(404).json({message:"No expenses found"})
         }
@@ -33,28 +34,6 @@ exports.postAddExpense = async(req, res, next) => {
     }
 };
 
-exports.putEditExpense = async (req, res, next) => {
-    try {
-        const expenseId = req.params.expenseId;
-        const { amount, description, category } = req.body;
-
-        // Find the expense by ID
-        const expense = await Expense.findByPk(expenseId);
-
-        // If expense not found, return 404 Not Found
-        if (!expense) {
-            return res.status(404).json({ error: 'Expense not found' });
-        }
-
-        const updatedExpense = await Expense.update({ amount, description, category }, { where: { id : expenseId } });
-        res.status(200).json(updatedExpense);
-
-    } catch (error) {
-        // Handle errors
-        console.log(error);
-        res.status(500).json({ error: 'Failed to update expense' });
-    }
-};
 
 exports.deleteExpense = async (req, res, next) => {
     const transaction = await sequelize.transaction();

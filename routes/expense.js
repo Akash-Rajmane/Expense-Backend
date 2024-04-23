@@ -9,8 +9,6 @@ router.get('/get-expenses', authMiddleware.checkAuth, expenseController.getAllEx
 
 router.post('/expenses/add-expense', authMiddleware.checkAuth, expenseController.postAddExpense);
 
-router.put('/expenses/:userId/edit-expense',  authMiddleware.checkAuth, expenseController.putEditExpense);
-
 router.delete('/expenses/:expenseId',  authMiddleware.checkAuth, expenseController.deleteExpense);
 
 module.exports = router;
