@@ -5,13 +5,23 @@ const sequelize = require('../util/database');
 
 exports.getAllExpensesByUser = async(req, res, next) => {
     try{
-        const expenses = await req.user.getExpenses();
+        const page = req.query.page;
+        const limit = 10;
+        const offset = (page-1)*limit;
+       
+        if (!page) {
+            throw new Error("Page not found!");
+        }
+
+        const count = await req.user.countExpenses();
+        const expenses = await req.user.getExpenses({limit,offset});
+        
         
         if(!expenses){
             return res.status(404).json({message:"No expenses found"})
         }
 
-        res.json(expenses);
+        res.json({count,expenses});
 
     }catch(err){
         console.log(err);

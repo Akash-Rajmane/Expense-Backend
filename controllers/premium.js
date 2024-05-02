@@ -22,7 +22,7 @@ exports.getLeaderboard = async (req, res, next) => {
         // })
         
         const arr = await User.findAll({
-            attributes: ['name', 'totalExpense'],
+            attributes: ['name', 'totalExpense', 'email'],
             order: [['totalExpense', 'DESC']]
         })
         
@@ -72,7 +72,7 @@ exports.getExpensesByInterval = async (req, res, next) => {
                 endDate = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
                 break;
             default:
-                return res.status(400).json({ error: 'Invalid interval' });
+                return res.status(400).json({ message: 'Invalid interval' });
         }
 
         // Fetch expenses within the date range for the given user
