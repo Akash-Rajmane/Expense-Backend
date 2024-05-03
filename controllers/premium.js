@@ -22,7 +22,7 @@ exports.getLeaderboard = async (req, res, next) => {
         // })
         
         const arr = await User.findAll({
-            attributes: ['name', 'totalExpense', 'email'],
+            attributes: ['name', 'totalExpense'],
             order: [['totalExpense', 'DESC']]
         })
         

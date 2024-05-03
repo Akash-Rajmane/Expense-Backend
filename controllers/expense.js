@@ -6,14 +6,14 @@ const sequelize = require('../util/database');
 exports.getAllExpensesByUser = async(req, res, next) => {
     try{
         const page = req.query.page;
-        const limit = 10;
+        const limit =  Number(req.query.limit);
         const offset = (page-1)*limit;
        
         if (!page) {
             throw new Error("Page not found!");
         }
 
-        const count = await req.user.countExpenses();
+        
         const expenses = await req.user.getExpenses({limit,offset});
         
         
@@ -21,8 +21,26 @@ exports.getAllExpensesByUser = async(req, res, next) => {
             return res.status(404).json({message:"No expenses found"})
         }
 
-        res.json({count,expenses});
+        res.json(expenses);
 
+    }catch(err){
+        console.log(err);
+    }
+}
+
+exports.getMaxPage = async (req, res, next) => {
+    try{
+        const limit =  Number(req.query.limit);
+
+        const count = await req.user.countExpenses();
+
+        if(!count || count===0){
+            return res.status(404).json({message:"No expenses found"})
+        }
+    
+        const maxPage = count<limit? 1 : Math.ceil(count/limit);
+
+        res.json(maxPage);
     }catch(err){
         console.log(err);
     }
