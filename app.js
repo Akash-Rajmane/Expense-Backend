@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const sequelize = require("./util/database");
@@ -13,10 +15,15 @@ const Expense = require("./models/expense");
 const Order = require('./models/order');
 const ForgotPasswordRequest = require('./models/forgotPassword');
 const ExpensesUrl = require("./models/expensesUrl");
+const morgan = require('morgan');
 
 const app = express();
+
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+
 app.use(cors());
 app.use(helmet());
+app.use(morgan('combined', { stream: accessLogStream }));
 app.use(bodyParser.json());
 
 // Relationships
