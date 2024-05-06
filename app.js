@@ -39,6 +39,11 @@ ForgotPasswordRequest.belongsTo(User);
 User.hasMany(ExpensesUrl);
 ExpensesUrl.belongsTo(User);
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+});
+
 
 app.use(userRoutes);
 app.use(expenseRoutes);
