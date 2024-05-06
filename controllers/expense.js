@@ -33,10 +33,6 @@ exports.getMaxPage = async (req, res, next) => {
         const limit =  Number(req.query.limit);
 
         const count = await req.user.countExpenses();
-
-        if(!count || count===0){
-            return res.status(404).json({message:"No expenses found"})
-        }
     
         const maxPage = count<limit? 1 : Math.ceil(count/limit);
 
