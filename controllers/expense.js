@@ -3,44 +3,46 @@ const User = require("../models/user");
 const sequelize = require('../util/database');
 
 
-exports.getAllExpensesByUser = async(req, res, next) => {
-    try{
-        const page = req.query.page;
-        const limit =  Number(req.query.limit);
-        const offset = (page-1)*limit;
-       
+exports.getAllExpensesByUser = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+
+        const offset = (page - 1) * limit;
+
         if (!page) {
             throw new Error("Page not found!");
         }
 
-        
-        const expenses = await req.user.getExpenses({limit,offset});
-        
-        
-        if(!expenses){
-            return res.status(404).json({message:"No expenses found"})
+        const [expenses, totalCount] = await Promise.all([
+            req.user.getExpenses({ limit, offset }),
+            req.user.countExpenses()
+        ]);
+
+        if (!expenses) {
+            return res.status(404).json({ message: "No expenses found" });
         }
 
-        res.json(expenses);
+        const totalPages = Math.ceil(totalCount / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
 
-    }catch(err){
+        res.json({
+            expenses,
+            currPage: page,
+            nextPage: hasNextPage ? page + 1 : null,
+            prevPage: hasPrevPage ? page - 1 : null,
+            hasNextPage,
+            hasPrevPage,
+            lastPage: totalPages
+        });
+
+    } catch (err) {
         console.log(err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 }
 
-exports.getMaxPage = async (req, res, next) => {
-    try{
-        const limit =  Number(req.query.limit);
-
-        const count = await req.user.countExpenses();
-    
-        const maxPage = count<limit? 1 : Math.ceil(count/limit);
-
-        res.json(maxPage);
-    }catch(err){
-        console.log(err);
-    }
-}
 
 exports.postAddExpense = async(req, res, next) => {
     const transaction = await sequelize.transaction();
