@@ -33,8 +33,9 @@ exports.postForgotPassword = async (req, res, next) => {
                 pass: process.env.BREVO_SMTP_KEY,
             },
         });
-        
-        const url = `http://localhost:3000/password/reset-password/${data.dataValues.id}`;
+        console.log(data);
+
+        const url = `${process.env.FE_HOST}/password/reset-password/${data.dataValues.id}`;
         
         const mailOptions = {
             from: 'akashrajmane007@gmail.com',
