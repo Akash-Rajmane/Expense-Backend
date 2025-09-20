@@ -35,18 +35,20 @@ app.use(helmet());
 app.use(morgan("combined", { stream: accessLogStream }));
 app.use(bodyParser.json());
 
-// Relationships
-User.hasMany(Expense);
-Expense.belongsTo(User);
+User.hasMany(Expense, { foreignKey: "userId", onDelete: "CASCADE" });
+Expense.belongsTo(User, { foreignKey: "userId" });
 
-User.hasMany(Order);
-Order.belongsTo(User);
+User.hasMany(Order, { foreignKey: "userId", onDelete: "CASCADE" });
+Order.belongsTo(User, { foreignKey: "userId" });
 
-User.hasMany(ForgotPasswordRequest);
-ForgotPasswordRequest.belongsTo(User);
+User.hasMany(ForgotPasswordRequest, {
+  foreignKey: "userId",
+  onDelete: "CASCADE",
+});
+ForgotPasswordRequest.belongsTo(User, { foreignKey: "userId" });
 
-User.hasMany(ExpensesUrl);
-ExpensesUrl.belongsTo(User);
+User.hasMany(ExpensesUrl, { foreignKey: "userId", onDelete: "CASCADE" });
+ExpensesUrl.belongsTo(User, { foreignKey: "userId" });
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
