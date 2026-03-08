@@ -4,7 +4,7 @@
   "description": "Expense Tracker API - NestJS with Fastify",
   "main": "dist/main.js",
   "scripts": {
-    "build": "npx nest build",
+    "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
