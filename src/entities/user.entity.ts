@@ -10,6 +10,7 @@ import { Expense } from './expense.entity';
 import { Order } from './order.entity';
 import { ForgotPasswordRequest } from './forgot-password.entity';
 import { ExpensesUrl } from './expenses-url.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity('users')
 export class User {
@@ -22,6 +23,7 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  @Exclude()
   @Column()
   password: string;
 

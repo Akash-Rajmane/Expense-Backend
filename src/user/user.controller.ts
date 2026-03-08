@@ -23,6 +23,7 @@ export class UserController {
   @Post('login')
   async login(@Body() loginUserDto: LoginUserDto) {
     const result = await this.userService.login(loginUserDto);
+
     return {
       message: 'Login successful',
       user: result.user,

@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
 import * as helmetPlugin from '@fastify/helmet';
 import * as corsPlugin from '@fastify/cors';
 import * as staticPlugin from '@fastify/static';
 import { AppModule } from './app.module';
+import { Reflector } from '@nestjs/core';
 
 declare global {
   var __dirname: string;
@@ -38,6 +39,8 @@ async function bootstrap() {
     root: viewsPath,
     prefix: '/static/',
   });
+
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   await app.listen(4000, '0.0.0.0', (err, address) => {
     if (err) throw err;
