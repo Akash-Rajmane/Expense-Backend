@@ -1,3 +1,41 @@
 node_modules
 .env
+.env.example
 access.log
+legacy/
+
+# NestJS Build
+dist/
+build/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (only MIGRATION_GUIDE.md and README.md will be tracked)
+API_TESTING.md
+CHANGELOG.md
+CONVERSION_COMPLETE.md
+CONVERSION_SUMMARY.md
+INDEX.md
+POST_CONVERSION.md
+QUICKSTART.md
+START_HERE.md
+VISUAL_SUMMARY.md
