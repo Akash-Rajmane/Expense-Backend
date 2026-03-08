@@ -1,8 +1,6 @@
 node_modules
 .env
-.env.example
 access.log
-legacy/
 
 # NestJS Build
 dist/
