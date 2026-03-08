@@ -33,7 +33,6 @@
     "class-validator": "^0.14.0",
     "dotenv": "^16.4.5",
     "fastify": "^4.25.1",
-    "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.13",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
