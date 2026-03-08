@@ -1,8 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
-import * as path from 'path';
+import * as helmetPlugin from '@fastify/helmet';
+import * as corsPlugin from '@fastify/cors';
+import * as staticPlugin from '@fastify/static';
 import { AppModule } from './app.module';
+
+declare global {
+  var __dirname: string;
+}
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
@@ -17,17 +23,19 @@ async function bootstrap() {
   );
 
   // Security
-  await app.register(require('@fastify/helmet'));
+  await app.register(helmetPlugin as any);
 
   // CORS
-  await app.register(require('@fastify/cors'), {
-    origin: ['http://localhost:3000'],
+  await app.register(corsPlugin as any, {
+    origin: ['http://localhost:3000', 'https://expense-tracker-fs.netlify.app'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'],
   });
 
-  // Serve static files
-  app.register(require('@fastify/static'), {
-    root: path.join(__dirname, '..', 'views'),
+  // Serve static files - views are in the views directory at project root
+  // When compiled, dist/main.js will be in dist/ folder, so ../views reaches project root/views
+  const viewsPath = `${__dirname}/../views`;
+  await app.register(staticPlugin as any, {
+    root: viewsPath,
     prefix: '/static/',
   });
 
