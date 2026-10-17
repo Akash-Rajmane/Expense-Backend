@@ -1,3 +1,4 @@
+const client = require("../util/database");
 const Expense = require("../models/expense");
 const User = require("../models/user");
 
@@ -41,21 +42,18 @@ exports.getAllExpensesByUser = async (req, res, next) => {
 };
 
 exports.postAddExpense = async (req, res, next) => {
-  // NOTE: ClickHouse does not support ACID transactions.
-  // The expense creation and user totalExpense update are NOT atomic.
-  // A failure between the two operations could leave totalExpense out of sync.
   try {
     const { amount, description, category } = req.body;
 
+    // Creating expense automatically triggers the materialized views:
+    // - user_expense_summary_mv (updates user total and count)
+    // - user_category_daily_expenses_mv (updates daily and category totals)
     const newExpense = await Expense.create({
       amount,
       description,
       category,
       userId: req.user.id,
     });
-
-    const newTotal = Number(req.user.totalExpense) + Number(amount);
-    await User.update(req.user.id, { totalExpense: newTotal });
 
     res.status(201).json(newExpense);
   } catch (err) {
@@ -65,7 +63,6 @@ exports.postAddExpense = async (req, res, next) => {
 };
 
 exports.deleteExpense = async (req, res, next) => {
-  // NOTE: ClickHouse DELETE is an async mutation — the row may not disappear immediately.
   try {
     const { expenseId } = req.params;
     const expense = await Expense.findById(expenseId);
@@ -76,8 +73,34 @@ exports.deleteExpense = async (req, res, next) => {
 
     await Expense.deleteById(expenseId);
 
-    const newTotal = Number(req.user.totalExpense) - Number(expense.amount);
-    await User.update(req.user.id, { totalExpense: newTotal });
+    // Compensate in SummingMergeTree destination tables for the deleted expense
+    const expenseDate = new Date(expense.createdAt).toISOString().split("T")[0];
+    await Promise.all([
+      client.insert({
+        table: "user_expense_summary",
+        values: [
+          {
+            userId: req.user.id,
+            totalExpense: -Number(expense.amount),
+            totalCount: 0,
+          },
+        ],
+        format: "JSONEachRow",
+      }),
+      client.insert({
+        table: "user_category_daily_expenses",
+        values: [
+          {
+            userId: req.user.id,
+            expenseDate: expenseDate,
+            category: expense.category,
+            totalAmount: -Number(expense.amount),
+            transactionCount: 0,
+          },
+        ],
+        format: "JSONEachRow",
+      }),
+    ]);
 
     res.sendStatus(204); // No content
   } catch (error) {

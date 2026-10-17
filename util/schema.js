@@ -67,6 +67,46 @@ const TABLE_SCHEMAS = [
     updatedAt DateTime64(3) DEFAULT now64(3)
   ) ENGINE = MergeTree()
   ORDER BY (userId, createdAt)`,
+
+  // User expense summary target table — SummingMergeTree
+  `CREATE TABLE IF NOT EXISTS user_expense_summary (
+    userId UUID,
+    totalExpense Float64,
+    totalCount UInt64
+  ) ENGINE = SummingMergeTree((totalExpense, totalCount))
+  ORDER BY userId`,
+
+  // User expense summary materialized view
+  `CREATE MATERIALIZED VIEW IF NOT EXISTS user_expense_summary_mv
+  TO user_expense_summary AS
+  SELECT
+    userId,
+    sum(amount) AS totalExpense,
+    count() AS totalCount
+  FROM expenses
+  GROUP BY userId`,
+
+  // User category daily expenses target table — SummingMergeTree
+  `CREATE TABLE IF NOT EXISTS user_category_daily_expenses (
+    userId UUID,
+    expenseDate Date,
+    category String,
+    totalAmount Float64,
+    transactionCount UInt64
+  ) ENGINE = SummingMergeTree((totalAmount, transactionCount))
+  ORDER BY (userId, expenseDate, category)`,
+
+  // User category daily expenses materialized view
+  `CREATE MATERIALIZED VIEW IF NOT EXISTS user_category_daily_expenses_mv
+  TO user_category_daily_expenses AS
+  SELECT
+    userId,
+    toDate(createdAt) AS expenseDate,
+    category,
+    sum(amount) AS totalAmount,
+    count() AS transactionCount
+  FROM expenses
+  GROUP BY userId, expenseDate, category`,
 ];
 
 // ALTER statements to add indexes to existing tables if already created

@@ -1,3 +1,4 @@
+const client = require("../util/database");
 const User = require("../models/user");
 const Expense = require("../models/expense");
 const S3Services = require("../services/s3");
@@ -6,16 +7,70 @@ const ExpensesUrl = require("../models/expensesUrl");
 
 exports.getLeaderboard = async (req, res, next) => {
   try {
-    const arr = await User.findAll({
-      attributes: ["name", "totalExpense"],
-      order: [["totalExpense", "DESC"]],
-      limit: 100,
+    const result = await client.query({
+      query: `
+        SELECT 
+          u.name,
+          coalesce(sum(s.totalExpense), 0) AS totalExpense
+        FROM users u FINAL
+        LEFT JOIN user_expense_summary s ON u.id = s.userId
+        GROUP BY u.name, u.id
+        ORDER BY totalExpense DESC
+        LIMIT 100
+      `,
+      format: "JSONEachRow",
     });
+
+    const arr = await result.json();
 
     res.json({
       success: true,
       data: arr,
       message: "Got user expenses successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.getCategorySummary = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { startDate, endDate } = req.query;
+
+    let dateFilter = "";
+    const params = { userId };
+
+    if (startDate && endDate) {
+      dateFilter = "AND expenseDate >= {startDate:Date} AND expenseDate <= {endDate:Date}";
+      params.startDate = startDate;
+      params.endDate = endDate;
+    }
+
+    const result = await client.query({
+      query: `
+        SELECT 
+          category,
+          sum(totalAmount) AS totalSpent,
+          sum(transactionCount) AS totalTransactions
+        FROM user_category_daily_expenses
+        WHERE userId = {userId:UUID} ${dateFilter}
+        GROUP BY category
+        ORDER BY totalSpent DESC
+      `,
+      query_params: params,
+      format: "JSONEachRow",
+    });
+
+    const summary = await result.json();
+    res.json({
+      success: true,
+      data: summary,
+      message: "Got category summary successfully",
     });
   } catch (err) {
     console.log(err);
