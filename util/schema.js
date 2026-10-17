@@ -63,7 +63,24 @@ const TABLE_SCHEMAS = [
   ORDER BY (userId, createdAt)`,
 ];
 
+const { createClient } = require("@clickhouse/client");
+
 async function initializeSchema() {
+  const dbName = process.env.CLICKHOUSE_DATABASE || "expense_tracker";
+
+  // Connect to 'default' database first to ensure target database exists
+  const adminClient = createClient({
+    url: process.env.CLICKHOUSE_URL || "http://localhost:8123",
+    username: process.env.CLICKHOUSE_USER || "default",
+    password: process.env.CLICKHOUSE_PASSWORD || "",
+    database: "default",
+  });
+
+  await adminClient.query({
+    query: `CREATE DATABASE IF NOT EXISTS ${dbName}`,
+  });
+  await adminClient.close();
+
   for (const schema of TABLE_SCHEMAS) {
     await client.query({ query: schema });
   }
