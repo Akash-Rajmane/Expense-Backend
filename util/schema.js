@@ -1,7 +1,7 @@
 const client = require("./database");
 
 const TABLE_SCHEMAS = [
-  // Users table — ReplacingMergeTree so we can "update" by re-inserting with a newer version
+  // Users table — ReplacingMergeTree with email bloom filter index
   `CREATE TABLE IF NOT EXISTS users (
     id UUID DEFAULT generateUUIDv4(),
     name String,
@@ -11,11 +11,12 @@ const TABLE_SCHEMAS = [
     isPremiumUser UInt8 DEFAULT 0,
     createdAt DateTime64(3) DEFAULT now64(3),
     updatedAt DateTime64(3) DEFAULT now64(3),
-    version UInt64 DEFAULT 1
+    version UInt64 DEFAULT 1,
+    INDEX idx_users_email email TYPE bloom_filter() GRANULARITY 1
   ) ENGINE = ReplacingMergeTree(version)
   ORDER BY id`,
 
-  // Expenses table — MergeTree (deletes handled via ALTER TABLE DELETE)
+  // Expenses table — MergeTree with id bloom filter & category set index
   `CREATE TABLE IF NOT EXISTS expenses (
     id UUID DEFAULT generateUUIDv4(),
     description String,
@@ -23,11 +24,13 @@ const TABLE_SCHEMAS = [
     category String,
     userId UUID,
     createdAt DateTime64(3) DEFAULT now64(3),
-    updatedAt DateTime64(3) DEFAULT now64(3)
+    updatedAt DateTime64(3) DEFAULT now64(3),
+    INDEX idx_expenses_id id TYPE bloom_filter() GRANULARITY 1,
+    INDEX idx_expenses_category category TYPE set(10) GRANULARITY 1
   ) ENGINE = MergeTree()
   ORDER BY (userId, createdAt)`,
 
-  // Orders table — ReplacingMergeTree for status updates
+  // Orders table — ReplacingMergeTree with orderId & userId bloom filter indexes
   `CREATE TABLE IF NOT EXISTS orders (
     id UUID DEFAULT generateUUIDv4(),
     paymentId String DEFAULT '',
@@ -36,18 +39,21 @@ const TABLE_SCHEMAS = [
     userId UUID,
     createdAt DateTime64(3) DEFAULT now64(3),
     updatedAt DateTime64(3) DEFAULT now64(3),
-    version UInt64 DEFAULT 1
+    version UInt64 DEFAULT 1,
+    INDEX idx_orders_order_id orderId TYPE bloom_filter() GRANULARITY 1,
+    INDEX idx_orders_user_id userId TYPE bloom_filter() GRANULARITY 1
   ) ENGINE = ReplacingMergeTree(version)
   ORDER BY id`,
 
-  // Forgot password requests — ReplacingMergeTree for isActive updates
+  // Forgot password requests — ReplacingMergeTree with userId index
   `CREATE TABLE IF NOT EXISTS forgot_password_requests (
     id String,
     isActive UInt8 DEFAULT 1,
     userId UUID,
     createdAt DateTime64(3) DEFAULT now64(3),
     updatedAt DateTime64(3) DEFAULT now64(3),
-    version UInt64 DEFAULT 1
+    version UInt64 DEFAULT 1,
+    INDEX idx_fpr_user_id userId TYPE bloom_filter() GRANULARITY 1
   ) ENGINE = ReplacingMergeTree(version)
   ORDER BY id`,
 
@@ -61,6 +67,16 @@ const TABLE_SCHEMAS = [
     updatedAt DateTime64(3) DEFAULT now64(3)
   ) ENGINE = MergeTree()
   ORDER BY (userId, createdAt)`,
+];
+
+// ALTER statements to add indexes to existing tables if already created
+const INDEX_MIGRATIONS = [
+  `ALTER TABLE users ADD INDEX IF NOT EXISTS idx_users_email email TYPE bloom_filter() GRANULARITY 1`,
+  `ALTER TABLE expenses ADD INDEX IF NOT EXISTS idx_expenses_id id TYPE bloom_filter() GRANULARITY 1`,
+  `ALTER TABLE expenses ADD INDEX IF NOT EXISTS idx_expenses_category category TYPE set(10) GRANULARITY 1`,
+  `ALTER TABLE orders ADD INDEX IF NOT EXISTS idx_orders_order_id orderId TYPE bloom_filter() GRANULARITY 1`,
+  `ALTER TABLE orders ADD INDEX IF NOT EXISTS idx_orders_user_id userId TYPE bloom_filter() GRANULARITY 1`,
+  `ALTER TABLE forgot_password_requests ADD INDEX IF NOT EXISTS idx_fpr_user_id userId TYPE bloom_filter() GRANULARITY 1`,
 ];
 
 const { createClient } = require("@clickhouse/client");
@@ -81,10 +97,21 @@ async function initializeSchema() {
   });
   await adminClient.close();
 
+  // Create tables with indexes
   for (const schema of TABLE_SCHEMAS) {
     await client.command({ query: schema });
   }
-  console.log("ClickHouse schema initialized successfully");
+
+  // Ensure indexes exist on pre-existing tables
+  for (const migration of INDEX_MIGRATIONS) {
+    try {
+      await client.command({ query: migration });
+    } catch (err) {
+      // Ignore if index already exists
+    }
+  }
+
+  console.log("ClickHouse schema and indexes initialized successfully");
 }
 
 module.exports = { initializeSchema };

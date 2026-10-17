@@ -28,7 +28,7 @@ const Expense = {
 
   async findById(id) {
     const result = await client.query({
-      query: `SELECT * FROM expenses WHERE id = {id:UUID}`,
+      query: `SELECT * FROM expenses WHERE id = {id:UUID} LIMIT 1`,
       query_params: { id },
       format: "JSONEachRow",
     });

@@ -9,6 +9,7 @@ exports.getLeaderboard = async (req, res, next) => {
     const arr = await User.findAll({
       attributes: ["name", "totalExpense"],
       order: [["totalExpense", "DESC"]],
+      limit: 100,
     });
 
     res.json({

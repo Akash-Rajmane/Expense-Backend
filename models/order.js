@@ -29,7 +29,7 @@ const Order = {
 
   async findByOrderId(orderId) {
     const result = await client.query({
-      query: `SELECT * FROM orders FINAL WHERE orderId = {orderId:String}`,
+      query: `SELECT * FROM orders FINAL WHERE orderId = {orderId:String} LIMIT 1`,
       query_params: { orderId },
       format: "JSONEachRow",
     });
@@ -59,7 +59,7 @@ const Order = {
 
   async findById(id) {
     const result = await client.query({
-      query: `SELECT * FROM orders FINAL WHERE id = {id:UUID}`,
+      query: `SELECT * FROM orders FINAL WHERE id = {id:UUID} LIMIT 1`,
       query_params: { id },
       format: "JSONEachRow",
     });

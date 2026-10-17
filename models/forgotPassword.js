@@ -26,7 +26,7 @@ const ForgotPasswordRequest = {
 
   async findById(id) {
     const result = await client.query({
-      query: `SELECT * FROM forgot_password_requests FINAL WHERE id = {id:String}`,
+      query: `SELECT * FROM forgot_password_requests FINAL WHERE id = {id:String} LIMIT 1`,
       query_params: { id },
       format: "JSONEachRow",
     });

@@ -30,7 +30,7 @@ const User = {
 
   async findById(id) {
     const result = await client.query({
-      query: `SELECT * FROM users FINAL WHERE id = {id:UUID}`,
+      query: `SELECT * FROM users FINAL WHERE id = {id:UUID} LIMIT 1`,
       query_params: { id },
       format: "JSONEachRow",
     });
@@ -40,7 +40,7 @@ const User = {
 
   async findByEmail(email) {
     const result = await client.query({
-      query: `SELECT * FROM users FINAL WHERE email = {email:String}`,
+      query: `SELECT * FROM users FINAL WHERE email = {email:String} LIMIT 1`,
       query_params: { email },
       format: "JSONEachRow",
     });
@@ -48,7 +48,7 @@ const User = {
     return rows.length > 0 ? rows[0] : null;
   },
 
-  async findAll({ attributes, order } = {}) {
+  async findAll({ attributes, order, limit } = {}) {
     // Build column list
     const cols =
       attributes && attributes.length > 0 ? attributes.join(", ") : "*";
@@ -62,8 +62,10 @@ const User = {
       orderClause = `ORDER BY ${orderParts.join(", ")}`;
     }
 
+    const limitClause = limit ? `LIMIT ${Number(limit)}` : "";
+
     const result = await client.query({
-      query: `SELECT ${cols} FROM users FINAL ${orderClause}`,
+      query: `SELECT ${cols} FROM users FINAL ${orderClause} ${limitClause}`,
       format: "JSONEachRow",
     });
     return result.json();
