@@ -64,7 +64,7 @@ const Expense = {
   },
 
   async deleteById(id) {
-    await client.query({
+    await client.command({
       query: `ALTER TABLE expenses DELETE WHERE id = {id:UUID}`,
       query_params: { id },
     });

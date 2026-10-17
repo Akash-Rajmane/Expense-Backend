@@ -76,13 +76,13 @@ async function initializeSchema() {
     database: "default",
   });
 
-  await adminClient.query({
+  await adminClient.command({
     query: `CREATE DATABASE IF NOT EXISTS ${dbName}`,
   });
   await adminClient.close();
 
   for (const schema of TABLE_SCHEMAS) {
-    await client.query({ query: schema });
+    await client.command({ query: schema });
   }
   console.log("ClickHouse schema initialized successfully");
 }
