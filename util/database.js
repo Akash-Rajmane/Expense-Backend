@@ -1,22 +1,12 @@
 require("dotenv").config();
 
-const Sequelize = require("sequelize");
+const { createClient } = require("@clickhouse/client");
 
-const sequelize = new Sequelize(
-  process.env.DATABASE,
-  process.env.USER,
-  process.env.PASSWORD,
-  {
-    host: process.env.HOST,
-    port: process.env.DB_PORT,
-    dialect: "postgres",
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
-    },
-  }
-);
+const client = createClient({
+  url: process.env.CLICKHOUSE_URL || "http://localhost:8123",
+  username: process.env.CLICKHOUSE_USER || "default",
+  password: process.env.CLICKHOUSE_PASSWORD || "",
+  database: process.env.CLICKHOUSE_DATABASE || "default",
+});
 
-module.exports = sequelize;
+module.exports = client;

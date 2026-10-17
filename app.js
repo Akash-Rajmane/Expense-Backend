@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
-const sequelize = require("./util/database");
+const client = require("./util/database");
+const { initializeSchema } = require("./util/schema");
 const cors = require("cors");
 const helmet = require("helmet");
 const userRoutes = require("./routes/user");
@@ -10,11 +11,6 @@ const expenseRoutes = require("./routes/expense");
 const purchaseRoutes = require("./routes/purchase");
 const premiumRoutes = require("./routes/premium");
 const passwordRoutes = require("./routes/password");
-const User = require("./models/user");
-const Expense = require("./models/expense");
-const Order = require("./models/order");
-const ForgotPasswordRequest = require("./models/forgotPassword");
-const ExpensesUrl = require("./models/expensesUrl");
 const morgan = require("morgan");
 
 const app = express();
@@ -35,20 +31,8 @@ app.use(helmet());
 app.use(morgan("combined", { stream: accessLogStream }));
 app.use(bodyParser.json());
 
-User.hasMany(Expense, { foreignKey: "userId", onDelete: "CASCADE" });
-Expense.belongsTo(User, { foreignKey: "userId" });
-
-User.hasMany(Order, { foreignKey: "userId", onDelete: "CASCADE" });
-Order.belongsTo(User, { foreignKey: "userId" });
-
-User.hasMany(ForgotPasswordRequest, {
-  foreignKey: "userId",
-  onDelete: "CASCADE",
-});
-ForgotPasswordRequest.belongsTo(User, { foreignKey: "userId" });
-
-User.hasMany(ExpensesUrl, { foreignKey: "userId", onDelete: "CASCADE" });
-ExpensesUrl.belongsTo(User, { foreignKey: "userId" });
+// NOTE: ClickHouse has no foreign keys or associations.
+// Referential integrity (e.g., CASCADE deletes) must be handled in application code.
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -61,8 +45,14 @@ app.use("/purchase", purchaseRoutes);
 app.use("/premium", premiumRoutes);
 app.use("/password", passwordRoutes);
 
-sequelize.sync().then(() => {
-  app.listen(4000, () => {
-    console.log("Server is running on port 4000");
+// Initialize ClickHouse schema (creates tables if they don't exist), then start server
+initializeSchema()
+  .then(() => {
+    app.listen(4000, () => {
+      console.log("Server is running on port 4000");
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to initialize ClickHouse schema:", err);
+    process.exit(1);
   });
-});

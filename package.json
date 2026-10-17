@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clickhouse/client": "^1.8.0",
     "aws-sdk": "^2.1608.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
@@ -19,13 +20,9 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "mysql2": "^3.9.3",
-    "pg": "^8.11.0",
-    "pg-hstore": "^2.3.4",
     "nodemailer": "^6.9.13",
     "nodemon": "^3.1.0",
     "razorpay": "^2.9.2",
-    "sequelize": "^6.37.2",
     "uuid": "^9.0.1"
   }
 }

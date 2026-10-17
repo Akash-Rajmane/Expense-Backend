@@ -1,7 +1,6 @@
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { isPremiumUser } = require("../middlewares/premiumMiddleware");
 
 exports.postSignUpUser = async (req, res, next) => {
   try {
@@ -16,7 +15,8 @@ exports.postSignUpUser = async (req, res, next) => {
     }
 
     // Check if email already exists in the database
-    const existingUser = await User.findOne({ where: { email } });
+    // (ClickHouse has no UNIQUE constraint, so we enforce uniqueness in app code)
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(409).json({ message: "Email already exists" });
     }
@@ -63,7 +63,7 @@ exports.postLogInUser = async (req, res, next) => {
     }
 
     // Find user by email in the database
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findByEmail(email);
 
     // If user doesn't exist, return error
     if (!user) {
@@ -110,7 +110,7 @@ exports.getIsPremiumUser = async (req, res, next) => {
         .json({ message: "User not found", success: false });
     }
 
-    res.status(200).json({ isPremiumUser: req.user.isPremiumUser });
+    res.status(200).json({ isPremiumUser: Boolean(Number(req.user.isPremiumUser)) });
   } catch (error) {
     console.error("User Not Found :", error);
     res.status(404).json({ message: "User Not Found", success: false });

@@ -1,25 +1,11 @@
 const User = require("../models/user");
 const Expense = require("../models/expense");
-const sequelize = require("../util/database");
-const { Op } = require("sequelize");
 const S3Services = require("../services/s3");
 const DataConversionServices = require("../services/dataConversion");
 const ExpensesUrl = require("../models/expensesUrl");
 
 exports.getLeaderboard = async (req, res, next) => {
   try {
-    // const arr = await User.findAll({
-    //     attributes: ['name', [sequelize.fn('sum', sequelize.col('expenses.amount')), 'totalAmount']],
-    //     include: [
-    //         {
-    //             model: Expense,
-    //             attributes: []
-    //         }
-    //     ],
-    //     group: ['user.id'],
-    //     order: [['totalAmount', 'DESC']]
-    // })
-
     const arr = await User.findAll({
       attributes: ["name", "totalExpense"],
       order: [["totalExpense", "DESC"]],
@@ -89,7 +75,7 @@ exports.getExpensesByInterval = async (req, res, next) => {
       where: {
         userId,
         createdAt: {
-          [Op.between]: [startDate, endDate],
+          between: [startDate, endDate],
         },
       },
     });
@@ -118,7 +104,7 @@ exports.getExpensesByInterval = async (req, res, next) => {
 exports.downloadExpenses = async (req, res, next) => {
   throw new Error("feature not available");
   try {
-    const expenses = await req.user.getExpenses();
+    const expenses = await Expense.findByUserId(req.user.id);
 
     const csvData = DataConversionServices.convertToCSV(expenses);
 
@@ -128,7 +114,11 @@ exports.downloadExpenses = async (req, res, next) => {
 
     const fileUrl = await S3Services.uploadToS3(csvData, fileName);
 
-    await req.user.createExpensesUrl({ url: fileUrl, fileName });
+    await ExpensesUrl.create({
+      url: fileUrl,
+      fileName,
+      userId: req.user.id,
+    });
 
     res.status(200).json({ fileUrl, success: true });
   } catch (err) {
@@ -142,7 +132,7 @@ exports.downloadExpenses = async (req, res, next) => {
 exports.getDownloadedFilesUrls = async (req, res, next) => {
   throw new Error("feature not available");
   try {
-    const expensesUrls = await req.user.getExpensesUrls({
+    const expensesUrls = await ExpensesUrl.findByUserId(req.user.id, {
       attributes: ["url", "fileName", "id", "createdAt"],
     });
 
